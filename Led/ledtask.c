@@ -30,12 +30,12 @@ void StartMainTask(void const * argument)
 {
 	for (;;) {
 		uint32_t notif = 0;
-		uint32_t t0 = HAL_GetTick();
+		//uint32_t t0 = HAL_GetTick();
 		xTaskNotifyWait(0, 0xFFFFFFFF, &notif, portMAX_DELAY);
 		ntick1++;
 		uint32_t t1 = HAL_GetTick();
-
 		ledTick(t1);
+		//(void)t0; (void)t1; // t0 and t1 are unused, only used if time measurement is needed
 	}
 }
 static void Fill_BitData(uint32_t);
@@ -46,18 +46,15 @@ static void ledTick(uint32_t t)
 {
 	if (dmaOnProgress) {
 		// error ?
+		// DMA took more than 10ms to complete, this is not
+		// normal and should not happen (and does not)
 		t4 = HAL_GetTick();
 	} else {
 		t0 = HAL_GetTick();
+		// Board LED for debug
 		HAL_GPIO_TogglePin(BOARD_LED_GPIO_Port, BOARD_LED_Pin);
-		Fill_BitData(t);
-		/*if ((0)) {
-			int rc = memcmp(saved,bit_data, sizeof(bit_data));
-			if (rc) {
-				return;
-			}
-		}*/
 
+		Fill_BitData(t);
 		dmaOnProgress = 1;
 		t1 = HAL_GetTick();
 		HAL_SPI_Transmit_DMA(&hspi1, bit_data, sizeof(bit_data));
@@ -110,6 +107,7 @@ static void _gen_bitarray(uint32_t *color_map, int numled)
 
 
 # if 0
+// obsolete, may still be usefull for tests
 static void Fill_BitData(uint32_t t)
 {
     static uint32_t color_map[NO_LEDS] = {
@@ -181,9 +179,6 @@ static int color_func(int led, int val)
 	}
 	v = v % PERIOD;
 
-	/*if (v>5000) {
-		v=10000-v;
-	}*/
 
 	if (v<0) {
 		v = (v + PERIOD) % PERIOD;
@@ -235,13 +230,10 @@ static void Fill_BitData(uint32_t t)
 void StartCtrlTask(void const * argument)
 {
 	for (;;) {
-		uint32_t t0 = HAL_GetTick();
 		uint32_t notif = 0;
-		//osDelay(1);
 		xTaskNotifyWait(0, 0xFFFFFFFF, &notif, portMAX_DELAY);
 		osDelay(1);
 
-		uint32_t t1 = HAL_GetTick();
 		ntick2++;
 	}
 }
