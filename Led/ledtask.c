@@ -18,10 +18,9 @@
 #define BIT_ONE             0x0C
 #define RGB(r,g,b)			((uint32_t)((g<<16)|(r<<8)|(b<<0)))
 static uint8_t bit_data[NO_BIT_DATA] = {0x00};
-//static uint8_t saved[NO_BIT_DATA] = {0x00};
 
-volatile uint8_t ledReady = 0;
 static volatile uint8_t dmaOnProgress = 0;
+
 static void ledTick(uint32_t t);
 
 uint32_t ntick1 = 0;
@@ -29,7 +28,6 @@ uint32_t ntick2 = 0;
 
 void StartMainTask(void const * argument)
 {
-	ledReady = 1;
 	for (;;) {
 		uint32_t notif = 0;
 		uint32_t t0 = HAL_GetTick();
@@ -46,16 +44,6 @@ static uint32_t t0,t1,t2,t3,t4;
 
 static void ledTick(uint32_t t)
 {
-
-
-
-	/*static int first = 1;
-	if (first) {
-		Fill_BitData();
-		//memcpy(saved,bit_data, sizeof(bit_data));
-		first = 0;
-	}*/
-
 	if (dmaOnProgress) {
 		// error ?
 		t4 = HAL_GetTick();
@@ -114,32 +102,6 @@ static void _gen_bitarray(uint32_t *color_map, int numled)
             }
         }
     }
-}
-
-
-
-void StartCtrlTask(void const * argument)
-{
-	for (;;) {
-		uint32_t t0 = HAL_GetTick();
-		uint32_t notif = 0;
-		//osDelay(1);
-		xTaskNotifyWait(0, 0xFFFFFFFF, &notif, portMAX_DELAY);
-		osDelay(1);
-
-		uint32_t t1 = HAL_GetTick();
-		ntick2++;
-	}
-}
-
-
-void vApplicationStackOverflowHook( TaskHandle_t xTask,  signed char *pcTaskName)
-{
-	//itm_debug1(DBG_ERR, "STK OVF", 1);
-	//FatalError("STKo", "stack overflow", Error_Stack);
-	for (;;) {
-
-	}
 }
 
 
@@ -207,12 +169,17 @@ static int color_func(int led, int val)
 {
 	int v;
 	if (BACK) {
-		v = val % (2*PERIOD);
-		v = v-PERIOD;
-		if (v<0) v=-v;
+		int t = val % (2*PERIOD);
+		t = t-PERIOD;
+		if (t<0) {
+			v = LEDVAL(led)-t;
+		} else {
+			v = LEDVAL(led)+t;
+		}
 	} else {
-		v = val % PERIOD;
+		v = LEDVAL(led)+val;
 	}
+	v = v % PERIOD;
 
 	/*if (v>5000) {
 		v=10000-v;
@@ -234,15 +201,13 @@ static int color_func(int led, int val)
 	return k/100;
 }
 
-int fixt = 5000;
 
 static void Fill_BitData(uint32_t t)
 {
     static uint32_t color_map[NO_LEDS] = {0};
 
     for (int i=0; i<NO_LEDS; i++) {
-    	//t=fixt;
-    	int r = color_func(i, LEDVAL(i)+30*t);
+    	int r = color_func(i, 30*t);
     	int g = color_func(i, LEDVAL(i)-20*t+5000);
     	int b = color_func(i, LEDVAL(i)+29*t+10000);
    		color_map[i]=RGB(r, g, b);
@@ -255,8 +220,39 @@ static void Fill_BitData(uint32_t t)
     }
     _gen_bitarray(color_map, NO_LEDS);
 }
-/*
- * led val   v    k
- * 22  4663	-337
- */
+
 #endif
+
+
+
+// ----------------------------------------
+
+// CtrlTask unused for now, intended (f.i.) to handle commands on usb/serial
+// to configure LEDs
+
+
+
+void StartCtrlTask(void const * argument)
+{
+	for (;;) {
+		uint32_t t0 = HAL_GetTick();
+		uint32_t notif = 0;
+		//osDelay(1);
+		xTaskNotifyWait(0, 0xFFFFFFFF, &notif, portMAX_DELAY);
+		osDelay(1);
+
+		uint32_t t1 = HAL_GetTick();
+		ntick2++;
+	}
+}
+
+
+void vApplicationStackOverflowHook( TaskHandle_t xTask,  signed char *pcTaskName)
+{
+	//itm_debug1(DBG_ERR, "STK OVF", 1);
+	//FatalError("STKo", "stack overflow", Error_Stack);
+	for (;;) {
+
+	}
+}
+

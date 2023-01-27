@@ -499,19 +499,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	  static int t = 0;
 	  static int nwake=0;
 	  t++;
-	  if ((0==(t%10)) && mainTaskHandle && ledReady) {
-		  BaseType_t higher1=0;
-		  BaseType_t higher2=0;
+	  // 100 Hz
+	  if ((0==(t%10)) && mainTaskHandle) {
+		  BaseType_t higher=0;
 		  nwake++;
-		  if (mainTaskHandle) {
-			  xTaskNotifyFromISR(mainTaskHandle, NOTIF_TICK, eSetBits, &higher1);
-		  }
-		  if (ctrlTaskHandle) {
-			  xTaskNotifyFromISR(ctrlTaskHandle, NOTIF_TICK, eSetBits, &higher2);
-		  }
-		  if (higher1 || higher2) {
-				portYIELD_FROM_ISR(pdTRUE);
-		  }
+
+		  xTaskNotifyFromISR(mainTaskHandle, NOTIF_TICK, eSetBits, &higher);
+		  portYIELD_FROM_ISR(higher);
 	  }
   }
   /* USER CODE END Callback 1 */
