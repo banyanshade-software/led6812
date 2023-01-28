@@ -71,7 +71,9 @@
 #define configUSE_16_BIT_TICKS                   0
 #define configUSE_MUTEXES                        1
 #define configQUEUE_REGISTRY_SIZE                8
+#define configCHECK_FOR_STACK_OVERFLOW           2
 #define configENABLE_BACKWARD_COMPATIBILITY      0
+#define configRECORD_STACK_HIGH_ADDRESS          1
 
 /* Co-routine definitions. */
 #define configUSE_CO_ROUTINES                    0
