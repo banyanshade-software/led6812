@@ -26,11 +26,13 @@ static void ledTick(uint32_t t);
 uint32_t ntick1 = 0;
 uint32_t ntick2 = 0;
 
+static volatile uint32_t t0,t1,t2,t3,t4,t5;
+
 void StartMainTask(void const * argument)
 {
 	for (;;) {
 		uint32_t notif = 0;
-		//uint32_t t0 = HAL_GetTick();
+		uint32_t t5 = HAL_GetTick();
 		xTaskNotifyWait(0, 0xFFFFFFFF, &notif, portMAX_DELAY);
 		ntick1++;
 		uint32_t t1 = HAL_GetTick();
@@ -40,7 +42,6 @@ void StartMainTask(void const * argument)
 }
 static void Fill_BitData(uint32_t);
 
-static uint32_t t0,t1,t2,t3,t4;
 
 static void ledTick(uint32_t t)
 {
@@ -52,7 +53,11 @@ static void ledTick(uint32_t t)
 	} else {
 		t0 = HAL_GetTick();
 		// Board LED for debug
-		HAL_GPIO_TogglePin(BOARD_LED_GPIO_Port, BOARD_LED_Pin);
+		if ((1)) {
+			static int n=0;
+			n++;
+			if ((n%10)==0) HAL_GPIO_TogglePin(BOARD_LED_GPIO_Port, BOARD_LED_Pin);
+		}
 
 		Fill_BitData(t);
 		dmaOnProgress = 1;
