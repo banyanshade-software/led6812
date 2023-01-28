@@ -9,11 +9,11 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "ledtask.h"
+#include "colorfunc.h"
 
-
-#define NO_LEDS             30
+//#define NO_LEDS             30
 #define NO_COLORS           3
-#define NO_BIT_DATA         (NO_LEDS * NO_COLORS * 4 + 4)
+#define NO_BIT_DATA         (NUM_LEDS * NO_COLORS * 4 + 4)
 #define BIT_ZERO            0x08
 #define BIT_ONE             0x0C
 #define RGB(r,g,b)			((uint32_t)((g<<16)|(r<<8)|(b<<0)))
@@ -102,10 +102,26 @@ static void _gen_bitarray(uint32_t *color_map, int numled)
 }
 
 
+static const led_ramp_t ramp = {
+		/*r*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=59,   .ifunc=IFUNC_TRIANGLE, .p1=10000, .p2=0},
+		/*g*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=60,  .ifunc=IFUNC_TRIANGLE, .p1=5000, .p2=0},
+		/*b*/ {.timefunc = TFUNC_CIRCULAR, .t0=0,  .w=-35,   .ifunc=IFUNC_TRIANGLE, .p1=5000, .p2=0},
+};
 
 
+static void Fill_BitData(uint32_t t)
+{
+    static uint32_t color_map[NUM_LEDS] = {0};
+
+    for (int i=0; i<NUM_LEDS; i++) {
+   		color_map[i] = rgb_for(&ramp, i, t);
+    }
+
+    _gen_bitarray(color_map, NUM_LEDS);
+}
 
 
+#if 0
 # if 0
 // obsolete, may still be usefull for tests
 static void Fill_BitData(uint32_t t)
@@ -217,7 +233,7 @@ static void Fill_BitData(uint32_t t)
 }
 
 #endif
-
+#endif
 
 
 // ----------------------------------------
