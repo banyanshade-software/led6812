@@ -22,7 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "../../Led/ledtask.h"
+#include "../../../Led/ledtask.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -136,7 +136,7 @@ int main(void)
   mainTaskHandle = osThreadCreate(osThread(mainTask), NULL);
 
   /* definition and creation of ctrlTask */
-  osThreadStaticDef(ctrlTask, StartCtrlTask, osPriorityRealtime, 0, 128, myTask02Buffer, &myTask02ControlBlock);
+  osThreadStaticDef(ctrlTask, StartCtrlTask, osPriorityNormal, 0, 128, myTask02Buffer, &myTask02ControlBlock);
   ctrlTaskHandle = osThreadCreate(osThread(ctrlTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */

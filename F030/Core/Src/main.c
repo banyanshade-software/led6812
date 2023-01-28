@@ -22,7 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "../../../Led/ledtask.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,9 +46,12 @@ SPI_HandleTypeDef hspi1;
 
 UART_HandleTypeDef huart1;
 
-osThreadId defaultTaskHandle;
-uint32_t defaultTaskBuffer[ 128 ];
+osThreadId mainTaskHandle;
+uint32_t defaultTaskBuffer[ 256 ];
 osStaticThreadDef_t defaultTaskControlBlock;
+osThreadId ctrlTaskHandle;
+uint32_t myTask02Buffer[ 128 ];
+osStaticThreadDef_t myTask02ControlBlock;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -59,7 +62,8 @@ static void MX_GPIO_Init(void);
 static void MX_RTC_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USART1_UART_Init(void);
-void StartDefaultTask(void const * argument);
+void StartMainTask(void const * argument);
+extern void StartCtrlTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -122,9 +126,13 @@ int main(void)
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* definition and creation of defaultTask */
-  osThreadStaticDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128, defaultTaskBuffer, &defaultTaskControlBlock);
-  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+  /* definition and creation of mainTask */
+  osThreadStaticDef(mainTask, StartMainTask, osPriorityNormal, 0, 256, defaultTaskBuffer, &defaultTaskControlBlock);
+  mainTaskHandle = osThreadCreate(osThread(mainTask), NULL);
+
+  /* definition and creation of ctrlTask */
+  osThreadStaticDef(ctrlTask, StartCtrlTask, osPriorityNormal, 0, 128, myTask02Buffer, &myTask02ControlBlock);
+  ctrlTaskHandle = osThreadCreate(osThread(ctrlTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -341,11 +349,22 @@ static void MX_USART1_UART_Init(void)
   */
 static void MX_GPIO_Init(void)
 {
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(BOARD_LED_GPIO_Port, BOARD_LED_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : BOARD_LED_Pin */
+  GPIO_InitStruct.Pin = BOARD_LED_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(BOARD_LED_GPIO_Port, &GPIO_InitStruct);
 
 }
 
@@ -353,14 +372,14 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_StartDefaultTask */
+/* USER CODE BEGIN Header_StartMainTask */
 /**
-  * @brief  Function implementing the defaultTask thread.
+  * @brief  Function implementing the mainTask thread.
   * @param  argument: Not used
   * @retval None
   */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void const * argument)
+/* USER CODE END Header_StartMainTask */
+__weak void StartMainTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
@@ -388,7 +407,19 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
+  if (htim->Instance == TIM6) {
+	  static int t = 0;
+	  static int nwake=0;
+	  t++;
+	  // 100 Hz
+	  if ((0==(t%10)) && mainTaskHandle) {
+		  BaseType_t higher=0;
+		  nwake++;
 
+		  xTaskNotifyFromISR(mainTaskHandle, NOTIF_TICK, eSetBits, &higher);
+		  portYIELD_FROM_ISR(higher);
+	  }
+  }
   /* USER CODE END Callback 1 */
 }
 
