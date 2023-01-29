@@ -32,7 +32,7 @@ void StartMainTask(void const * argument)
 {
 	for (;;) {
 		uint32_t notif = 0;
-		uint32_t t5 = HAL_GetTick();
+		t5 = HAL_GetTick();
 		xTaskNotifyWait(0, 0xFFFFFFFF, &notif, portMAX_DELAY);
 		ntick1++;
 		uint32_t t1 = HAL_GetTick();
