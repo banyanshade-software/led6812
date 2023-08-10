@@ -108,9 +108,9 @@ static void _gen_bitarray(uint32_t *color_map, int numled)
 
 
 static const led_ramp_t ramp = {
-		/*r*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=59,   .ifunc=IFUNC_TRIANGLE, .p1=10000, .p2=0},
-		/*g*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=60,  .ifunc=IFUNC_TRIANGLE, .p1=5000, .p2=0},
-		/*b*/ {.timefunc = TFUNC_CIRCULAR, .t0=0,  .w=-35,   .ifunc=IFUNC_TRIANGLE, .p1=5000, .p2=0},
+		/*r*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=40,   .ifunc=IFUNC_TRIANGLE, .p1=25000, .p2=0},
+		/*g*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=41,  .ifunc=IFUNC_TRIANGLE, .p1=25000, .p2=0},
+		/*b*/ {.timefunc = TFUNC_CIRCULAR, .t0=0,      .w=42,   .ifunc=IFUNC_TRIANGLE, .p1=25000, .p2=0},
 };
 
 
