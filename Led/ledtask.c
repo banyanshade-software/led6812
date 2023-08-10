@@ -247,14 +247,34 @@ static void Fill_BitData(uint32_t t)
 // CtrlTask unused for now, intended (f.i.) to handle commands on usb/serial
 // to configure LEDs
 
+extern TIM_HandleTypeDef htim1;
+
+
+static int16_t get_rotary(TIM_HandleTypeDef *ptdef)
+{
+	uint16_t p = __HAL_TIM_GET_COUNTER(ptdef);
+
+	int16_t sp = (int16_t)p;
+	return sp/2;
+}
+
+
 
 
 void StartCtrlTask(void const * argument)
 {
+	HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
+	int16_t rot = get_rotary(&htim1);
 	for (;;) {
 		uint32_t notif = 0;
 		xTaskNotifyWait(0, 0xFFFFFFFF, &notif, portMAX_DELAY);
-		osDelay(1);
+		int16_t nrot = get_rotary(&htim1);
+		if (nrot != rot) {
+			// action
+			rot = nrot;
+		}
+
+		// osDelay(1);
 
 		ntick2++;
 	}
