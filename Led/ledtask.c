@@ -119,19 +119,25 @@ static void _gen_bitarray(uint32_t *color_map, int numled)
     }
 }
 
-#define NUM_PATTERN 9
+#define NUM_PATTERN 11
 
 static const led_ramp_t ramps[NUM_PATTERN] = {
+		{
+				/*r*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=40,   .ifunc=IFUNC_TRIANGLE, .p1=25000, .p2=0},
+				/*g*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=41,   .ifunc=IFUNC_TRIANGLE, .p1=25000, .p2=0},
+				/*b*/ {.timefunc = TFUNC_CIRCULAR, .t0=0,      .w=-42,   .ifunc=IFUNC_TRIANGLE, .p1=25000, .p2=0},
+		},
 		{
 				/*r*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=40,   .ifunc=IFUNC_TRIANGLE, .p1=25000, .p2=0},
 				/*g*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=41,   .ifunc=IFUNC_TRIANGLE, .p1=25000, .p2=0},
 				/*b*/ {.timefunc = TFUNC_CIRCULAR, .t0=0,      .w=42,   .ifunc=IFUNC_TRIANGLE, .p1=25000, .p2=0},
 		},
 		{
-				/*r*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=40,   .ifunc=IFUNC_TRIANGLE, .p1=25000, .p2=0},
-				/*g*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=41,   .ifunc=IFUNC_TRIANGLE, .p1=25000, .p2=0},
-				/*b*/ {.timefunc = TFUNC_CIRCULAR, .t0=0,      .w=-42,   .ifunc=IFUNC_TRIANGLE, .p1=25000, .p2=0},
+				/*r*/ {.timefunc = TFUNC_CIRCULAR, .t0=0,      .w=40,   .ifunc=IFUNC_TRIANGLE, .p1=12000, .p2=0},
+				/*g*/ {.timefunc = TFUNC_CIRCULAR, .t0=0,  .w=40,   .ifunc=IFUNC_TRIANGLE, .p1=6000, .p2=0},
+				/*b*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=40,   .ifunc=IFUNC_TRIANGLE, .p1=12000, .p2=0},
 		},
+
 		{
 				/*r*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=250,   .ifunc=IFUNC_TRIANGLE, .p1=25000, .p2=0},
 				/*g*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=521,   .ifunc=IFUNC_TRIANGLE, .p1=25000, .p2=0},
@@ -167,6 +173,12 @@ static const led_ramp_t ramps[NUM_PATTERN] = {
 				/*g*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=40,   .ifunc=IFUNC_ZERO, .p1=10000, .p2=0},
 				/*b*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=40,   .ifunc=IFUNC_ZERO, .p1=10000, .p2=0},
 		},
+		{
+				/*r*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=10,   .ifunc=IFUNC_TRIANGLE, .p1=25000, .p2=0},
+				/*g*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=-400,   .ifunc=IFUNC_TRIANGLE, .p1=2000, .p2=0},
+				/*b*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=-400,   .ifunc=IFUNC_TRIANGLE, .p1=2500, .p2=0},
+		},
+
 };
 
 static volatile int16_t pattern_number_raw = 0;
