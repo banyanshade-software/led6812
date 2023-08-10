@@ -11,6 +11,9 @@
 #include "ledtask.h"
 #include "colorfunc.h"
 
+
+#define ABS(_a) ((_a)<0 ? -(_a) : (_a))
+
 //#define NO_LEDS             30
 #define NO_COLORS           3
 #define NO_BIT_DATA         (NUM_LEDS * NO_COLORS * 4 + 4)
@@ -28,8 +31,13 @@ uint32_t ntick2 = 0;
 
 static volatile uint32_t t0,t1,t2,t3,t4,t5;
 
+static volatile int reset_time = 0;
+
+
+
 void StartMainTask(void const * argument)
 {
+	reset_time = 1;
 	for (;;) {
 		uint32_t notif = 0;
 		t5 = HAL_GetTick();
@@ -45,12 +53,17 @@ static void Fill_BitData(uint32_t);
 
 static void ledTick(uint32_t t)
 {
+	static uint32_t tbase = 0;
 	if (dmaOnProgress) {
 		// error ?
 		// DMA took more than 10ms to complete, this is not
 		// normal and should not happen (and does not)
 		t4 = HAL_GetTick();
 	} else {
+		if (reset_time) {
+			reset_time = 0;
+			tbase = t;
+		}
 		t0 = HAL_GetTick();
 		// Board LED for debug
 		if ((1)) {
@@ -59,7 +72,7 @@ static void ledTick(uint32_t t)
 			if ((n%10)==0) HAL_GPIO_TogglePin(BOARD_LED_GPIO_Port, BOARD_LED_Pin);
 		}
 
-		Fill_BitData(t);
+		Fill_BitData(t-tbase);
 		dmaOnProgress = 1;
 		t1 = HAL_GetTick();
 		HAL_SPI_Transmit_DMA(&hspi1, bit_data, sizeof(bit_data));
@@ -106,140 +119,80 @@ static void _gen_bitarray(uint32_t *color_map, int numled)
     }
 }
 
+#define NUM_PATTERN 9
 
-static const led_ramp_t ramp = {
-		/*r*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=40,   .ifunc=IFUNC_TRIANGLE, .p1=25000, .p2=0},
-		/*g*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=41,  .ifunc=IFUNC_TRIANGLE, .p1=25000, .p2=0},
-		/*b*/ {.timefunc = TFUNC_CIRCULAR, .t0=0,      .w=42,   .ifunc=IFUNC_TRIANGLE, .p1=25000, .p2=0},
+static const led_ramp_t ramps[NUM_PATTERN] = {
+		{
+				/*r*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=40,   .ifunc=IFUNC_TRIANGLE, .p1=25000, .p2=0},
+				/*g*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=41,   .ifunc=IFUNC_TRIANGLE, .p1=25000, .p2=0},
+				/*b*/ {.timefunc = TFUNC_CIRCULAR, .t0=0,      .w=42,   .ifunc=IFUNC_TRIANGLE, .p1=25000, .p2=0},
+		},
+		{
+				/*r*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=40,   .ifunc=IFUNC_TRIANGLE, .p1=25000, .p2=0},
+				/*g*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=41,   .ifunc=IFUNC_TRIANGLE, .p1=25000, .p2=0},
+				/*b*/ {.timefunc = TFUNC_CIRCULAR, .t0=0,      .w=-42,   .ifunc=IFUNC_TRIANGLE, .p1=25000, .p2=0},
+		},
+		{
+				/*r*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=250,   .ifunc=IFUNC_TRIANGLE, .p1=25000, .p2=0},
+				/*g*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=521,   .ifunc=IFUNC_TRIANGLE, .p1=25000, .p2=0},
+				/*b*/ {.timefunc = TFUNC_CIRCULAR, .t0=0,      .w=-72,   .ifunc=IFUNC_TRIANGLE, .p1=15000, .p2=0},
+		},
+		{
+				/*r*/ {.timefunc = TFUNC_CIRCULAR, .t0=0,  .w=5,   .ifunc=IFUNC_TRIANGLE, .p1=5000, .p2=0},
+				/*g*/ {.timefunc = TFUNC_CIRCULAR, .t0=0,  .w=6,    .ifunc=IFUNC_TRIANGLE, .p1=5000, .p2=0},
+				/*b*/ {.timefunc = TFUNC_CIRCULAR, .t0=0,  .w=7,    .ifunc=IFUNC_TRIANGLE, .p1=5000, .p2=0},
+		},
+		{
+				/*r*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=80,   .ifunc=IFUNC_TRIANGLE, .p1=15000, .p2=0},
+				/*g*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=81,  .ifunc=IFUNC_TRIANGLE, .p1=15000, .p2=0},
+				/*b*/ {.timefunc = TFUNC_CIRCULAR, .t0=0,      .w=-72,   .ifunc=IFUNC_TRIANGLE, .p1=15000, .p2=0},
+		},
+		{
+				/*r*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=40,   .ifunc=IFUNC_TRIANGLE, .p1=10000, .p2=0},
+				/*g*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=40,   .ifunc=IFUNC_TRIANGLE, .p1=10000, .p2=0},
+				/*b*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=40,   .ifunc=IFUNC_TRIANGLE, .p1=10000, .p2=0},
+		},
+		{
+				/*r*/ {.timefunc = TFUNC_CIRCULAR, .t0=8000,  .w=40,   .ifunc=IFUNC_TRIANGLE, .p1=10000, .p2=0},
+				/*g*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=40,   .ifunc=IFUNC_TRIANGLE, .p1=10000, .p2=0},
+				/*b*/ {.timefunc = TFUNC_CIRCULAR, .t0=12000,  .w=40,   .ifunc=IFUNC_TRIANGLE, .p1=10000, .p2=0},
+		},
+		{
+				/*r*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=40,   .ifunc=IFUNC_ZERO, .p1=10000, .p2=0},
+				/*g*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=40,   .ifunc=IFUNC_TRIANGLE, .p1=30000, .p2=0},
+				/*b*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=40,   .ifunc=IFUNC_ZERO, .p1=10000, .p2=0},
+		},
+		{
+				/*r*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=40,   .ifunc=IFUNC_TRIANGLE, .p1=10000, .p2=0},
+				/*g*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=40,   .ifunc=IFUNC_ZERO, .p1=10000, .p2=0},
+				/*b*/ {.timefunc = TFUNC_CIRCULAR, .t0=10000,  .w=40,   .ifunc=IFUNC_ZERO, .p1=10000, .p2=0},
+		},
 };
 
+static volatile int16_t pattern_number_raw = 0;
+
+static void bh(void)
+{
+
+}
 
 static void Fill_BitData(uint32_t t)
 {
     static uint32_t color_map[NUM_LEDS] = {0};
-
+    int rampnum = ABS(pattern_number_raw) % NUM_PATTERN;
+    if (rampnum==2) {
+    	bh();
+    }
+    const led_ramp_t *ramp = &ramps[rampnum];
     for (int i=0; i<NUM_LEDS; i++) {
     	//color_map[i] = RGB(0, 10, 0);
-   		color_map[i] = rgb_for(&ramp, i, t);
+   		color_map[i] = rgb_for(ramp, i, t);
     }
 
     _gen_bitarray(color_map, NUM_LEDS);
 }
 
 
-#if 0
-# if 0
-// obsolete, may still be usefull for tests
-static void Fill_BitData(uint32_t t)
-{
-    static uint32_t color_map[NO_LEDS] = {
-        RGB(8,  0,  0),
-		RGB(50,  0,  0),
-		RGB(  100,  0,  0),
-		RGB(  0,  8,  0),
-		RGB(  0,  50,  0),
-		RGB(  0,  100,  0),
-		RGB(  0,  0,  8),
-		RGB(  0,  0,  50),
-		RGB(  0,  0,  100),
-
-
-		RGB(  100,  0,  0),
-		RGB(  90,  0,  10),
-		RGB(  80,  0,  20),
-		RGB(  70,  0,  30),
-		RGB(  60,  0,  40),
-		RGB(  50,  0,  50),
-		RGB(  40,  0,  60),
-		RGB(  30,  0,  70),
-		RGB(  20,  0,  80),
-		RGB(  10,  0,  90),
-		RGB(  0,  0,  100),
-
-		RGB(  0,  10,  90),
-		RGB(  0,  20,   80),
-		RGB(  0,  30,   70),
-		RGB(  0,  40,   60),
-		RGB(  0,  50,   50),
-		RGB(  0,  60,   40),
-		RGB(  0,  70,   30),
-		RGB(  0,  80,   20),
-		RGB(  0,  90,   10),
-		RGB(  0,  100,   0),
-
-
-    };
-    if ((0)) {
-    	int	rand (void);
-    	for (int i=10; i<NO_LEDS; i++) {
-    		color_map[i] = RGB(rand()%50, rand()%50, rand()%50);
-    	}
-    }
-    _gen_bitarray(color_map, NO_LEDS);
-}
-
-#else
-
-
-#define PERIOD 100000
-#define BACK 0
-#define LEDVAL(_l) (((_l)*PERIOD)/NO_LEDS)
-
-static int color_func(int led, int val)
-{
-	int v;
-	if (BACK) {
-		int t = val % (2*PERIOD);
-		t = t-PERIOD;
-		if (t<0) {
-			v = LEDVAL(led)-t;
-		} else {
-			v = LEDVAL(led)+t;
-		}
-	} else {
-		v = LEDVAL(led)+val;
-	}
-	v = v % PERIOD;
-
-
-	if (v<0) {
-		v = (v + PERIOD) % PERIOD;
-	}
-	if (v<0) {
-		return 0;
-	}
-	if ((v>20000)) {
-		return 0;
-	}
-	v = v-10000;
-	if (v<0) v=-v;
-	int k = (10000-v);
-
-	return k/100;
-}
-
-
-static void Fill_BitData(uint32_t t)
-{
-    static uint32_t color_map[NO_LEDS] = {0};
-
-    for (int i=0; i<NO_LEDS; i++) {
-    	int r = color_func(i, 30*t);
-    	int g = color_func(i, LEDVAL(i)-20*t+5000);
-    	int b = color_func(i, LEDVAL(i)+29*t+10000);
-   		color_map[i]=RGB(r, g, b);
-    }
-    if ((0)) {
-    	int	rand (void);
-    	for (int i=10; i<NO_LEDS; i++) {
-    		color_map[i] = RGB(rand()%50, rand()%50, rand()%50);
-    	}
-    }
-    _gen_bitarray(color_map, NO_LEDS);
-}
-
-#endif
-#endif
 
 
 // ----------------------------------------
@@ -271,6 +224,9 @@ void StartCtrlTask(void const * argument)
 		int16_t nrot = get_rotary(&htim1);
 		if (nrot != rot) {
 			// action
+			pattern_number_raw = nrot;
+			reset_time = 1;
+			// update rot
 			rot = nrot;
 		}
 
