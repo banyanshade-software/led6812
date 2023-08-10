@@ -119,6 +119,7 @@ static void Fill_BitData(uint32_t t)
     static uint32_t color_map[NUM_LEDS] = {0};
 
     for (int i=0; i<NUM_LEDS; i++) {
+    	//color_map[i] = RGB(0, 10, 0);
    		color_map[i] = rgb_for(&ramp, i, t);
     }
 
